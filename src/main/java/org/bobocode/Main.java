@@ -4,6 +4,7 @@ import org.bobocode.datasource.PooledDataSource;
 import org.postgresql.ds.PGSimpleDataSource;
 import javax.sql.DataSource;
 import java.sql.SQLException;
+import java.util.function.Supplier;
 
 public class Main {
     private static final String url = "jdbc:postgresql://localhost:5432/postgres";
@@ -12,7 +13,15 @@ public class Main {
 
     public static void main(String[] args) {
 
-        var dataSource= getPooledDataSource();
+        Supplier<DataSource> vendorSpecificDatasourceSupplier = () -> {
+            var datasource = new PGSimpleDataSource();
+            datasource.setURL(url);
+            datasource.setUser(username);
+            datasource.setPassword(password);
+            return datasource;
+        };
+
+        var dataSource= getPooledDataSource(vendorSpecificDatasourceSupplier);
 //        var dataSource= getDataSource();
         try {
             int total = 0;
@@ -48,8 +57,8 @@ public class Main {
         return datasource;
     }
 
-    private static DataSource getPooledDataSource() {
-        var dataSource = new PooledDataSource(url, username, password);
+    private static DataSource getPooledDataSource(Supplier<DataSource> supplier) {
+        var dataSource = new PooledDataSource(supplier);
         return dataSource;
     }
 }
